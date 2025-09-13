@@ -1,0 +1,591 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Student Finance Manager — Dark Glass UI</title>
+
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    :root{
+      --bg:#0f1724;
+      --card: rgba(255,255,255,0.04);
+      --glass: rgba(255,255,255,0.06);
+      --accent:#7c5cff;
+      --accent-2:#00d4ff;
+      --muted:#9aa4b2;
+      --success:#22c55e;
+      --danger:#ff6b6b;
+      --glass-border: rgba(255,255,255,0.08);
+      font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      color-scheme: dark;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      min-height:100vh;
+      background:
+        radial-gradient(800px 400px at 10% 10%, rgba(124,92,255,0.08), transparent 8%),
+        radial-gradient(700px 350px at 90% 90%, rgba(0,212,255,0.04), transparent 10%),
+        var(--bg);
+      color:#e6eef8;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
+
+    /* Layout */
+    .app {
+      display:grid;
+      grid-template-columns: 260px 1fr;
+      gap:24px;
+      padding:28px;
+      max-width:1200px;
+      margin:0 auto;
+    }
+
+    /* Sidebar */
+    .sidebar{
+      background:linear-gradient(180deg,var(--card), rgba(255,255,255,0.02));
+      border:1px solid var(--glass-border);
+      border-radius:14px;
+      padding:18px;
+      height:calc(100vh - 56px);
+      position:sticky;
+      top:28px;
+      display:flex;
+      flex-direction:column;
+      gap:16px;
+    }
+    .brand{
+      display:flex; gap:10px; align-items:center;
+      font-weight:700; letter-spacing:0.2px;
+    }
+    .brand .logo{
+      width:44px; height:44px; border-radius:10px;
+      background:linear-gradient(135deg,var(--accent),var(--accent-2));
+      display:grid; place-items:center; font-weight:700;
+      box-shadow: 0 6px 20px rgba(124,92,255,0.18), inset 0 -4px 10px rgba(0,0,0,0.15);
+    }
+    nav{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+    .nav-btn{
+      background:transparent; border:0; color:var(--muted); padding:10px; text-align:left;
+      border-radius:8px; cursor:pointer; font-weight:600; display:flex;align-items:center;gap:10px;
+    }
+    .nav-btn:hover{background:rgba(255,255,255,0.02); color:#fff}
+    .nav-btn.active{background:linear-gradient(90deg, rgba(124,92,255,0.12), rgba(0,212,255,0.04)); color:#fff}
+
+    /* main content */
+    .main{
+      display:flex; flex-direction:column; gap:18px;
+    }
+    .top-row{
+      display:flex; justify-content:space-between; gap:16px; align-items:center;
+    }
+    .cards{display:flex; gap:16px; align-items:stretch;}
+    .card{
+      background:var(--card);
+      border-radius:12px;
+      padding:14px;
+      flex:1;
+      border:1px solid var(--glass-border);
+      box-shadow: 0 8px 30px rgba(2,6,23,0.5);
+    }
+    .big{
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+    }
+    .big .value{font-size:1.6rem; font-weight:700; color:#fff}
+    .muted{color:var(--muted); font-size:0.9rem}
+
+    /* Form */
+    .form-row{display:flex; gap:10px; margin-top:10px; flex-wrap:wrap}
+    .input, select, button { padding:10px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.04); background:transparent; color:inherit }
+    .input{min-width:160px}
+    .btn-primary{ background:linear-gradient(90deg,var(--accent),var(--accent-2)); border:0; color:#071125; font-weight:700; cursor:pointer }
+    .btn-ghost{ background:transparent; border:1px dashed rgba(255,255,255,0.04); color:var(--muted) }
+
+    /* analytics */
+    .analytics { display:grid; grid-template-columns: 1fr 360px; gap:16px; align-items:start; }
+    .list { display:flex; flex-direction:column; gap:8px; margin-top:8px; }
+    .tx {
+      display:flex; justify-content:space-between; gap:8px; padding:10px; border-radius:10px;
+      background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);
+      border:1px solid rgba(255,255,255,0.02);
+    }
+    .tag { padding:6px 8px; border-radius:999px; font-weight:700; font-size:12px; color:#081025; }
+    .tag.food{background:#ffd166}
+    .tag.books{background:#4dd0e1}
+    .tag.travel{background:#ffb4a2}
+    .tag.ent{background:#b39ddb}
+
+    /* budgets & goals */
+    .budget-item{display:flex;flex-direction:column;gap:6px}
+    .progress-wrap{background:rgba(255,255,255,0.03); border-radius:8px; overflow:hidden; height:12px}
+    .progress-bar{height:100%; background:linear-gradient(90deg,var(--accent),var(--accent-2)); width:0%}
+
+    /* footer small */
+    .hint{font-size:13px; color:var(--muted)}
+
+    /* responsive */
+    @media (max-width:980px){
+      .app{grid-template-columns:1fr; padding:18px}
+      .sidebar{position:relative;height:auto;flex-direction:row;align-items:center;padding:10px}
+      .analytics{grid-template-columns:1fr}
+      .cards{flex-direction:column}
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <aside class="sidebar" aria-label="Sidebar">
+      <div class="brand">
+        <div class="logo">SF</div>
+        <div>
+          <div style="font-size:14px">Student Finance</div>
+          <div class="muted" style="font-size:12px">Manager — Demo</div>
+        </div>
+      </div>
+
+      <nav role="navigation" aria-label="Main nav">
+        <button class="nav-btn active" data-view="dashboard">📊 Dashboard</button>
+        <button class="nav-btn" data-view="transactions">🧾 Transactions</button>
+        <button class="nav-btn" data-view="goals">🎯 Goals</button>
+        <button class="nav-btn" data-view="settings">⚙️ Settings</button>
+      </nav>
+
+      <div style="margin-top:auto">
+        <div class="muted" style="font-size:12px">Tip</div>
+        <div class="hint">Type "bus" or "lunch" in description — category suggestion will appear.</div>
+      </div>
+    </aside>
+
+    <main class="main" role="main">
+      <!-- top -->
+      <div class="top-row">
+        <div class="cards" style="flex:1">
+          <div class="card big">
+            <div>
+              <div class="muted">Total Balance</div>
+              <div class="value" id="balance">₹0</div>
+              <div class="muted" id="bal-sub">Income: ₹0 • Expense: ₹0</div>
+            </div>
+            <div style="text-align:right">
+              <div class="muted">Monthly Forecast</div>
+              <div id="forecast-quick" style="font-weight:700">—</div>
+            </div>
+          </div>
+
+          <div class="card" style="max-width:320px">
+            <div class="muted">Quick Add</div>
+            <div class="form-row" style="margin-top:8px">
+              <input class="input" id="desc" placeholder="e.g. bus to campus" aria-label="Description" />
+              <input class="input" id="amount" type="number" placeholder="₹ amount" aria-label="Amount" />
+            </div>
+            <div class="form-row">
+              <select id="cat-suggest" class="input" aria-label="Category">
+                <option value="Food">Food</option>
+                <option value="Books">Books</option>
+                <option value="Travel">Travel</option>
+                <option value="Entertainment">Entertainment</option>
+                <option value="Others">Others</option>
+              </select>
+              <select id="type" class="input" aria-label="Type">
+                <option value="expense">Expense</option>
+                <option value="income">Income</option>
+              </select>
+              <button class="btn-primary" id="addBtn">Add</button>
+            </div>
+            <div class="muted" style="margin-top:8px;font-size:13px">Suggestion: <span id="suggestion">—</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- analytics grid -->
+      <section class="analytics">
+        <div>
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div><strong>Expense Breakdown</strong><div class="muted" style="font-size:12px">Categories</div></div>
+              <div class="muted" id="last-updated">—</div>
+            </div>
+            <canvas id="doughnut" style="margin-top:12px"></canvas>
+            <div class="muted" style="margin-top:8px">Recent transactions</div>
+            <div class="list" id="tx-list" aria-live="polite"></div>
+          </div>
+
+          <div class="card" style="margin-top:12px">
+            <strong>Predictive Spending (weekly)</strong>
+            <div class="muted" style="font-size:13px">Simple linear projection for next 4 weeks</div>
+            <canvas id="line" style="margin-top:12px"></canvas>
+          </div>
+        </div>
+
+        <!-- right column: budgets & goals -->
+        <div>
+          <div class="card">
+            <strong>Budgets</strong>
+            <div class="muted" style="font-size:13px">Set monthly budgets per category</div>
+            <div id="budgets" style="margin-top:10px"></div>
+            <button class="btn-ghost" id="editBudgets" style="margin-top:10px">Edit Budgets</button>
+          </div>
+
+          <div class="card" style="margin-top:12px">
+            <strong>Goals</strong>
+            <div class="muted" style="font-size:13px">Save toward a goal</div>
+            <div id="goalsArea" style="margin-top:10px"></div>
+            <button class="btn-ghost" id="newGoalBtn" style="margin-top:10px">New Goal</button>
+          </div>
+        </div>
+      </section>
+
+      <div class="muted" style="font-size:13px">Built for demo — data stored locally in your browser.</div>
+    </main>
+  </div>
+
+  <!-- Modal helpers (simple) -->
+  <div id="modal-root" aria-hidden="true"></div>
+
+  <script>
+  // ---------- Data model (localStorage) ----------
+  const STORAGE_KEY = 'sfm_v1';
+  const defaultState = {
+    transactions: [], // {id, desc, amount, type, category, date}
+    budgets: { Food:1500, Books:2000, Travel:1200, Entertainment:1000, Others:1000 },
+    goals: [] // {id, name, target, saved}
+  };
+
+  function loadState(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return JSON.parse(JSON.stringify(defaultState));
+      const obj = JSON.parse(raw);
+      return Object.assign(JSON.parse(JSON.stringify(defaultState)), obj);
+    }catch(e){ return JSON.parse(JSON.stringify(defaultState)); }
+  }
+  function saveState(state){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+  let state = loadState();
+
+  // ---------- Utility helpers ----------
+  function uid(prefix='id'){ return prefix + '_' + Math.random().toString(36).slice(2,9); }
+  function fmt(n){ return '₹' + Number(n||0).toLocaleString('en-IN'); }
+  function nowIso(){ return new Date().toISOString().slice(0,10); }
+
+  // ---------- Simple keyword-based categorizer ----------
+  const KEYWORDS = {
+    Food: ['lunch','dinner','cafe','coffee','breakfast','canteen','meal','snack','pizza','burger'],
+    Travel: ['bus','train','uber','ola','taxi','metro','flight','ticket','fuel','petrol','auto'],
+    Books: ['book','notebook','stationery','library','textbook','pen','study'],
+    Entertainment: ['movie','netflix','music','game','concert','party']
+  };
+
+  function suggestCategory(desc){
+    if(!desc) return null;
+    const s = desc.toLowerCase();
+    for(const [cat, kws] of Object.entries(KEYWORDS)){
+      for(const kw of kws){
+        if(s.includes(kw)) return cat;
+      }
+    }
+    return 'Others';
+  }
+
+  // ---------- UI wiring ----------
+  const descEl = document.getElementById('desc');
+  const amountEl = document.getElementById('amount');
+  const catSuggestEl = document.getElementById('cat-suggest');
+  const typeEl = document.getElementById('type');
+  const addBtn = document.getElementById('addBtn');
+  const suggestionEl = document.getElementById('suggestion');
+  const txListEl = document.getElementById('tx-list');
+  const doughnutEl = document.getElementById('doughnut');
+  const lineEl = document.getElementById('line');
+  const balanceEl = document.getElementById('balance');
+  const balSubEl = document.getElementById('bal-sub');
+  const lastUpdatedEl = document.getElementById('last-updated');
+  const budgetsEl = document.getElementById('budgets');
+  const goalsArea = document.getElementById('goalsArea');
+  const forecastQuick = document.getElementById('forecast-quick');
+
+  // charts
+  let doughnutChart = new Chart(doughnutEl.getContext('2d'), {
+    type:'doughnut',
+    data:{labels:[], datasets:[{data:[], backgroundColor:['#ffd166','#4dd0e1','#ffb4a2','#b39ddb','#94a3b8']}]},
+    options:{ plugins:{ legend:{ position:'bottom'} } }
+  });
+
+  let lineChart = new Chart(lineEl.getContext('2d'), {
+    type:'line',
+    data:{labels:[], datasets:[{label:'Weekly spending', data:[], fill:true, tension:0.35, pointRadius:3}]},
+    options:{ scales:{ y:{ beginAtZero:true } }, plugins:{ legend:{ display:false }} }
+  });
+
+  // nav buttons
+  document.querySelectorAll('.nav-btn').forEach(b=>{
+    b.addEventListener('click',(e)=>{
+      document.querySelectorAll('.nav-btn').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      // For this demo, we keep everything on a single page — future: swap views
+    });
+  });
+
+  // suggestion as user types
+  descEl.addEventListener('input', ()=>{
+    const s = suggestCategory(descEl.value);
+    suggestionEl.textContent = s ? s : '—';
+    if(s) catSuggestEl.value = s;
+  });
+
+  // add transaction
+  addBtn.addEventListener('click', ()=>{
+    const desc = descEl.value.trim();
+    const amount = parseFloat(amountEl.value);
+    const type = typeEl.value;
+    const category = catSuggestEl.value || 'Others';
+    if(!desc || isNaN(amount) || amount <= 0){
+      alert('Enter valid description and amount');
+      return;
+    }
+    const tx = { id: uid('tx'), desc, amount: Math.round(amount*100)/100, type, category, date: nowIso() };
+    state.transactions.push(tx);
+    saveState(state);
+    descEl.value = ''; amountEl.value='';
+    suggestionEl.textContent='—';
+    renderAll();
+  });
+
+  // ---------- Rendering ----------
+  function renderAll(){
+    renderTxList();
+    renderCharts();
+    renderBudgets();
+    renderGoals();
+    renderSummary();
+    lastUpdatedEl.textContent = 'Updated ' + new Date().toLocaleString();
+  }
+
+  function renderTxList(){
+    const recent = state.transactions.slice().reverse().slice(0,8);
+    txListEl.innerHTML = '';
+    if(recent.length===0){
+      txListEl.innerHTML = '<div class="muted">No transactions yet — add one!</div>';
+      return;
+    }
+    recent.forEach(tx=>{
+      const d = document.createElement('div');
+      d.className='tx';
+      const left = document.createElement('div');
+      left.innerHTML = `<div style="font-weight:700">${tx.desc}</div><div class="muted" style="font-size:12px">${tx.date} • ${tx.type}</div>`;
+      const right = document.createElement('div');
+      const tagClass = tx.category.toLowerCase() === 'food' ? 'food' : tx.category.toLowerCase() === 'books' ? 'books' : tx.category.toLowerCase() === 'travel' ? 'travel' : tx.category.toLowerCase() === 'entertainment' ? 'ent' : '';
+      right.innerHTML = `<div style="text-align:right">${tx.type==='income' ? '<span style="color:var(--success);font-weight:700">+' : '<span style="color:var(--danger);font-weight:700">-'} ${fmt(tx.amount)}</span></div><div style="margin-top:6px"><span class="tag ${tagClass}">${tx.category}</span></div>`;
+      d.appendChild(left); d.appendChild(right);
+      txListEl.appendChild(d);
+    });
+  }
+
+  function aggregateByCategory(){
+    const agg = {};
+    state.transactions.filter(t=>t.type==='expense').forEach(t=>{
+      agg[t.category] = (agg[t.category]||0) + Number(t.amount);
+    });
+    return agg;
+  }
+
+  function renderCharts(){
+    // doughnut
+    const agg = aggregateByCategory();
+    const labels = Object.keys(agg).length ? Object.keys(agg) : ['None'];
+    const values = Object.keys(agg).length ? Object.values(agg) : [1];
+    doughnutChart.data.labels = labels;
+    doughnutChart.data.datasets[0].data = values;
+    doughnutChart.update();
+
+    // weekly aggregation and simple linear prediction
+    // week index (ISO week number) -> total spent
+    const weekly = {}; // key: 'YYYY-W##'
+    state.transactions.filter(t=>t.type==='expense').forEach(t=>{
+      const d = new Date(t.date + 'T00:00:00');
+      const yr = d.getFullYear();
+      const week = getWeekNumber(d);
+      const key = `${yr}-W${week}`;
+      weekly[key] = (weekly[key]||0) + Number(t.amount);
+    });
+    const keys = Object.keys(weekly).sort();
+    const x = keys.map((_,i)=>i);
+    const y = keys.map(k=>weekly[k]);
+    // If not enough points, use simple defaults
+    let labelsLine=[], dataLine=[];
+    if(keys.length === 0){
+      labelsLine = ['W1','W2','W3','W4']; dataLine=[1200,1600,1800,1500];
+    } else {
+      // create series for weeks so far then predict next 4 via linear fit
+      labelsLine = keys.slice().map(k => k.replace('-', ' '));
+      dataLine = y.slice();
+      // linear fit
+      if(y.length >= 2){
+        const coeffs = linearFit(x,y); // returns [m,b]
+        const start = x.length;
+        for(let i=0;i<4;i++){
+          const val = Math.max(0, coeffs[0]*(start+i) + coeffs[1]);
+          labelsLine.push('Proj W' + (start+i+1));
+          dataLine.push(Math.round(val));
+        }
+      } else {
+        // if only 1 point, repeat with small growth
+        const last = y[0] || 1000;
+        for(let i=0;i<4;i++){
+          labelsLine.push('Proj W' + (i+1));
+          dataLine.push(Math.round(last * (1 + 0.05*(i+1))));
+        }
+      }
+    }
+    lineChart.data.labels = labelsLine;
+    lineChart.data.datasets[0].data = dataLine;
+    lineChart.update();
+
+    // quick monthly forecast: sum projected next4 weeks
+    const projSum = dataLine.slice(-4).reduce((a,b)=>a+b,0);
+    forecastQuick.textContent = fmt(Math.round(projSum));
+  }
+
+  function renderBudgets(){
+    budgetsEl.innerHTML = '';
+    const agg = aggregateByCategory();
+    const budgets = state.budgets;
+    Object.keys(budgets).forEach(cat=>{
+      const used = agg[cat] || 0;
+      const budget = budgets[cat];
+      const pct = Math.min(100, Math.round((used/budget)*100));
+      const wrap = document.createElement('div');
+      wrap.className = 'budget-item';
+      wrap.innerHTML = `<div style="display:flex;justify-content:space-between"><div>${cat}</div><div class="muted">${fmt(used)} / ${fmt(budget)}</div></div>
+        <div class="progress-wrap"><div class="progress-bar" style="width:${pct}%"></div></div>
+        <div class="muted" style="font-size:12px">${pct>=100? '<strong style="color:var(--danger)">Exceeded</strong>' : pct>=75 ? '<strong style="color:var(--accent)">Almost limit</strong>' : 'OK'}</div>`;
+      budgetsEl.appendChild(wrap);
+    });
+
+    // edit budgets btn behavior
+    document.getElementById('editBudgets').onclick = ()=>openBudgetsEditor();
+  }
+
+  function renderGoals(){
+    goalsArea.innerHTML = '';
+    if(state.goals.length===0){
+      goalsArea.innerHTML = '<div class="muted">No goals yet — create one to start saving.</div>';
+      return;
+    }
+    state.goals.forEach(g=>{
+      const div = document.createElement('div');
+      const pct = Math.min(100, Math.round((g.saved/g.target)*100));
+      div.innerHTML = `<div style="display:flex;justify-content:space-between"><div style="font-weight:700">${g.name}</div><div class="muted">${fmt(g.saved)} / ${fmt(g.target)}</div></div>
+        <div class="progress-wrap"><div class="progress-bar" style="width:${pct}%"></div></div>
+        <div style="display:flex;gap:8px;margin-top:8px"><button class="btn-ghost" onclick="depositToGoal('${g.id}')">Deposit ₹100</button><button class="btn-ghost" onclick="removeGoal('${g.id}')">Remove</button></div>`;
+      goalsArea.appendChild(div);
+    });
+  }
+
+  function renderSummary(){
+    const income = state.transactions.filter(t=>t.type==='income').reduce((s,t)=>s+Number(t.amount),0);
+    const expense = state.transactions.filter(t=>t.type==='expense').reduce((s,t)=>s+Number(t.amount),0);
+    const bal = income - expense;
+    balanceEl.textContent = fmt(Math.round(bal));
+    balSubEl.textContent = `Income: ${fmt(income)} • Expense: ${fmt(expense)}`;
+  }
+
+  // ---------- simple editors & interactions ----------
+  function openBudgetsEditor(){
+    const keys = Object.keys(state.budgets);
+    const html = keys.map(k=>`<div style="margin-bottom:8px"><label style="display:block">${k}</label><input data-key="${k}" style="width:100%;padding:8px;border-radius:6px;background:#081125;border:1px solid rgba(255,255,255,0.04);color:#fff" value="${state.budgets[k]}"></div>`).join('');
+    const wrapper = document.createElement('div');
+    wrapper.style.position='fixed'; wrapper.style.left=0; wrapper.style.top=0; wrapper.style.right=0; wrapper.style.bottom=0;
+    wrapper.style.display='grid'; wrapper.style.placeItems='center'; wrapper.style.background='rgba(2,6,23,0.6)';
+    wrapper.innerHTML = `<div style="width:420px;background:var(--card);border:1px solid var(--glass-border);padding:18px;border-radius:12px">
+      <h3>Edit Budgets</h3>
+      <div style="margin-top:8px">${html}</div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+        <button id="cancelBtn" class="btn-ghost">Cancel</button>
+        <button id="saveBud" class="btn-primary">Save</button>
+      </div>
+    </div>`;
+    document.body.appendChild(wrapper);
+    wrapper.querySelector('#cancelBtn').onclick = ()=>wrapper.remove();
+    wrapper.querySelector('#saveBud').onclick = ()=>{
+      wrapper.querySelectorAll('input[data-key]').forEach(inp=>{
+        const k = inp.getAttribute('data-key');
+        const v = Number(inp.value) || defaultState.budgets[k] || 1000;
+        state.budgets[k] = Math.max(0, Math.round(v));
+      });
+      saveState(state);
+      wrapper.remove();
+      renderBudgets();
+    };
+  }
+
+  function depositToGoal(id){
+    const g = state.goals.find(x=>x.id===id);
+    if(!g) return;
+    // deposit a small fixed amount from "balance" if available — for demo we'll just add
+    g.saved = Math.min(g.target, g.saved + 100);
+    saveState(state);
+    renderGoals();
+    renderSummary();
+  }
+
+  function removeGoal(id){
+    state.goals = state.goals.filter(x=>x.id!==id);
+    saveState(state);
+    renderGoals();
+  }
+
+  document.getElementById('newGoalBtn').onclick = ()=>{
+    const name = prompt('Goal name (e.g. New Laptop)');
+    if(!name) return;
+    const target = Number(prompt('Target amount in ₹', '5000'));
+    if(!target || target<=0) return alert('Invalid amount');
+    state.goals.push({id:uid('g'), name, target:Math.round(target), saved:0});
+    saveState(state);
+    renderGoals();
+  };
+
+  // deposit small amount by using income transactions
+  // For demo: allow adding income via Quick Add (handled earlier)
+
+  // ---------- helpers ----------
+  function getWeekNumber(d) { // returns ISO week number
+    const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    const dayNum = date.getUTCDay() || 7;
+    date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(date.getUTCFullYear(),0,1));
+    return Math.ceil((((date - yearStart) / 86400000) + 1)/7);
+  }
+
+  function linearFit(xs, ys){
+    // compute slope m and intercept b for y = m*x + b
+    const n = xs.length;
+    let sx=0, sy=0, sxy=0, sxx=0;
+    for(let i=0;i<n;i++){
+      sx += xs[i]; sy += ys[i];
+      sxy += xs[i]*ys[i]; sxx += xs[i]*xs[i];
+    }
+    const m = (n*sxy - sx*sy) / (n*sxx - sx*sx || 1);
+    const b = (sy - m*sx)/n;
+    return [m,b];
+  }
+
+  // ---------- initial render ----------
+  renderAll();
+
+  // expose some functions to global for event handlers inside generated markup
+  window.depositToGoal = depositToGoal;
+  window.removeGoal = removeGoal;
+
+  // small accessibility: focus desc on load
+  descEl.focus();
+
+  </script>
+</body>
+</html>
